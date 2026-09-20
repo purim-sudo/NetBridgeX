@@ -18,17 +18,20 @@
     <application
         android:theme="@style/AppTheme"
         android:label="@string/app_name"
-        android:icon="@null"
+        android:icon="@drawable/ic_public_24dp"
         android:debuggable="true"
         android:allowBackup="false"
         android:supportsRtl="true"
         android:extractNativeLibs="true">
         <activity
-            android:theme="@style/Theme.Transparent"
+            android:theme="@style/AppTheme"
             android:name="com.genymobile.gnirehtet.GnirehtetActivity"
             android:exported="true"
-            android:finishOnTaskLaunch="true"
-            android:excludeFromRecents="true">
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
             <intent-filter>
                 <action android:name="com.netbridgex.android.START"/>
                 <action android:name="com.netbridgex.android.STOP"/>
