@@ -1,0 +1,61 @@
+[Reading 57 lines from start (total: 57 lines, 0 remaining)]
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    android:versionCode="10"
+    android:versionName="2.7.0-netbridgex"
+    android:compileSdkVersion="36"
+    android:compileSdkVersionCodename="16"
+    package="com.netbridgex.android"
+    platformBuildVersionCode="36"
+    platformBuildVersionName="16">
+    <uses-sdk
+        android:minSdkVersion="21"
+        android:targetSdkVersion="36"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <application
+        android:theme="@style/AppTheme"
+        android:label="@string/app_name"
+        android:icon="@null"
+        android:debuggable="true"
+        android:allowBackup="false"
+        android:supportsRtl="true"
+        android:extractNativeLibs="true">
+        <activity
+            android:theme="@style/Theme.Transparent"
+            android:name="com.genymobile.gnirehtet.GnirehtetActivity"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="true"
+            android:finishOnTaskLaunch="true"
+            android:excludeFromRecents="true">
+            <intent-filter>
+                <action android:name="com.netbridgex.android.START"/>
+                <action android:name="com.netbridgex.android.STOP"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <service
+            android:name="com.genymobile.gnirehtet.GnirehtetService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:enabled="true"
+            android:exported="true"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
+                android:value="false"/>
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="USB/ADB reverse-tethering VPN packet forwarding"/>
+        </service>
+    </application>
+</manifest>
+
+[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
