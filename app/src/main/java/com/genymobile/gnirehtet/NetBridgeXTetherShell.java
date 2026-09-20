@@ -267,7 +267,7 @@ public final class NetBridgeXTetherShell {
         final String[] result = {"timeout"};
         Object callback = Proxy.newProxyInstance(callbackClass.getClassLoader(), new Class[]{callbackClass}, new InvocationHandler() { // from class: com.genymobile.gnirehtet.NetBridgeXTetherShell$$ExternalSyntheticLambda0
             @Override // java.lang.reflect.InvocationHandler
-            public final Object invoke(Object obj, Method method, Object[] objArr) {
+            public final Object invoke(Object obj, Method method, Object[] objArr) throws Throwable {
                 return NetBridgeXTetherShell.lambda$startWifiTethering$0(result, latch, obj, method, objArr);
             }
         });
