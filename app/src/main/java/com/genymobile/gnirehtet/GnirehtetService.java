@@ -17,6 +17,7 @@ import java.net.InetAddress;
 /* JADX INFO: loaded from: classes2.dex */
 public class GnirehtetService extends VpnService {
     private static final String ACTION_START_VPN = "com.genymobile.gnirehtet.START_VPN";
+    private static final String ACTION_STOP_VPN = "com.genymobile.gnirehtet.STOP_VPN";
     private static final String EXTRA_PROXY_BIND_ADDRESS = "proxyBindAddress";
     private static final String EXTRA_PROXY_PORT = "proxyPort";
     private static final String EXTRA_VPN_CONFIGURATION = "vpnConfiguration";
@@ -51,12 +52,20 @@ public class GnirehtetService extends VpnService {
     }
 
     public static void stop(Context context) {
-        context.stopService(new Intent(context, (Class<?>) GnirehtetService.class));
+        Intent intent = new Intent(context, (Class<?>) GnirehtetService.class).setAction(ACTION_STOP_VPN);
+        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent);
+        else context.startService(intent);
     }
 
     @Override // android.app.Service
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand action=" + (intent == null ? "null" : intent.getAction()));
+        if (intent != null && ACTION_STOP_VPN.equals(intent.getAction())) {
+            Log.i(TAG, "Explicit stop requested");
+            close();
+            stopSelf(startId);
+            return MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT;
+        }
         if (intent == null || !ACTION_START_VPN.equals(intent.getAction())) {
             Log.w(TAG, "Ignoring empty or unknown start request");
             stopSelf(startId);
