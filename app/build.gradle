@@ -1,0 +1,47 @@
+[Reading 43 lines from start (total: 43 lines, 0 remaining)]
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+	namespace "com.netbridgex.android"
+    compileSdkVersion 36
+
+    defaultConfig {
+        applicationId 'com.netbridgex.android'
+        minSdkVersion 21
+        //noinspection ExpiringTargetSdkVersion,ExpiredTargetSdkVersion
+        targetSdkVersion 36
+        versionCode 10
+        versionName "2.7.0-netbridgex"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    buildFeatures {
+        buildConfig = false
+    }
+}
+
+dependencies {
+    // TODO: dependencies
+}
+
+[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
