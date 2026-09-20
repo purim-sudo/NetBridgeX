@@ -3,6 +3,8 @@ name: NetBridgeX Android Build
 on:
   push:
     branches: [ main, reconstruct-2.7-source ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
