@@ -2,6 +2,7 @@ package com.genymobile.gnirehtet;
 
 import android.content.Context;
 import android.content.Intent;
+import com.netbridgex.android.R;
 import android.net.Network;
 import android.net.VpnService;
 import android.os.Build;
@@ -30,7 +31,7 @@ public class GnirehtetService extends VpnService {
     private static final String TAG = GnirehtetService.class.getSimpleName();
     private static final InetAddress VPN_ADDRESS = Net.toInetAddress(new byte[]{10, 0, 0, 2});
     private final Notifier notifier = new Notifier(this);
-    private final Handler handler = new RelayTunnelConnectionStateHandler();
+    private final Handler handler = new RelayTunnelConnectionStateHandler(this);
 
     public static void start(Context context, VpnConfiguration config) {
         start(context, config, null, 0);
@@ -95,7 +96,7 @@ public class GnirehtetService extends VpnService {
     }
 
     private boolean setupVpn(VpnConfiguration config) {
-        VpnService.Builder builder = new VpnService.Builder(this).addAddress(VPN_ADDRESS, 32).allowFamily(OsConstants.AF_INET6).setSession(getString(R.string.app_name)).setBlocking(true).setMtu(MTU);
+        VpnService.Builder builder = new VpnService.Builder().addAddress(VPN_ADDRESS, 32).allowFamily(OsConstants.AF_INET6).setSession(getString(R.string.app_name)).setBlocking(true).setMtu(MTU);
         if (Build.VERSION.SDK_INT >= 29) {
             builder.setMetered(false);
         }

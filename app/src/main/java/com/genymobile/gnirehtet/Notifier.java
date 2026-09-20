@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import com.netbridgex.android.R;
 import android.os.Build;
 
 /* JADX INFO: loaded from: classes2.dex */

@@ -31,7 +31,7 @@ public class IPPacketOutputStream extends OutputStream implements AutoCloseable 
         if (len > MAX_IP_PACKET_LENGTH) {
             throw new IOException("IPPacketOutputStream does not support writing more than one packet at a time");
         }
-        if (BuildConfig.DEBUG && len > this.buffer.remaining()) {
+        if (len > this.buffer.remaining()) {
             Log.e(TAG, len + " must be <= than " + this.buffer.remaining());
             Log.e(TAG, this.buffer.toString());
             throw new AssertionError("Buffer is unexpectedly full");

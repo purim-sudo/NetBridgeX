@@ -51,7 +51,7 @@ public final class HotspotProxyServer {
             Thread acceptThread = new Thread(new Runnable() { // from class: com.genymobile.gnirehtet.HotspotProxyServer$$ExternalSyntheticLambda3
                 @Override // java.lang.Runnable
                 public final void run() {
-                    this.f$0.acceptLoop();
+                    HotspotProxyServer.this.acceptLoop();
                 }
             }, "NetBridgeX-Proxy-Accept");
             acceptThread.setDaemon(true);
@@ -85,7 +85,6 @@ public final class HotspotProxyServer {
             this.executor.shutdownNow();
             this.executor.awaitTermination(1L, TimeUnit.SECONDS);
         }
-        throw th;
     }
 
     public boolean isRunning() {
@@ -101,7 +100,7 @@ public final class HotspotProxyServer {
                 this.executor.execute(new Runnable() { // from class: com.genymobile.gnirehtet.HotspotProxyServer$$ExternalSyntheticLambda2
                     @Override // java.lang.Runnable
                     public final void run() {
-                        this.f$0.lambda$acceptLoop$0(client);
+                        HotspotProxyServer.this.lambda$acceptLoop$0(client);
                     }
                 });
             } catch (IOException e) {
