@@ -36,6 +36,8 @@ Local Gradle output:
 
 `app/build/outputs/apk/debug/app-debug.apk`
 
+The CI workflow is also registered on `main`, so pull requests and pushes run the Android build automatically.
+
 ## Architecture
 
 - `GnirehtetService`: Android `VpnService` for the phone's own traffic.
