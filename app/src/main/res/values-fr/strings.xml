@@ -1,10 +1,6 @@
-[Reading 6 lines from start (total: 6 lines, 0 remaining)]
-
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="relay_connected">Reverse tethering activé</string>
     <string name="relay_disconnected">Déconnecté du serveur relais</string>
     <string name="stop_vpn">Arrêter Gnirehtet</string>
 </resources>
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

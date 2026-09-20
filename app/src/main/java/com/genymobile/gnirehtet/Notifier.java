@@ -1,5 +1,3 @@
-[Reading 100 lines from start (total: 100 lines, 0 remaining)]
-
 package com.genymobile.gnirehtet;
 
 import android.app.Notification;
@@ -100,5 +98,3 @@ public class Notifier {
         return (NotificationManager) this.context.getSystemService("notification");
     }
 }
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

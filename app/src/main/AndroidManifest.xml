@@ -1,5 +1,3 @@
-[Reading 57 lines from start (total: 57 lines, 0 remaining)]
-
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:versionCode="10"
@@ -28,7 +26,6 @@
         <activity
             android:theme="@style/Theme.Transparent"
             android:name="com.genymobile.gnirehtet.GnirehtetActivity"
-            android:permission="android.permission.BIND_VPN_SERVICE"
             android:exported="true"
             android:finishOnTaskLaunch="true"
             android:excludeFromRecents="true">
@@ -57,5 +54,3 @@
         </service>
     </application>
 </manifest>
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

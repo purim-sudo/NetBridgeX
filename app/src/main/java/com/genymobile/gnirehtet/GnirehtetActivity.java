@@ -1,5 +1,3 @@
-[Reading 144 lines from start (total: 144 lines, 0 remaining)]
-
 package com.genymobile.gnirehtet;
 
 import android.app.Activity;
@@ -144,5 +142,3 @@ public class GnirehtetActivity extends Activity {
         return (Build.VERSION.SDK_INT < 33 || this.notificationPermissionRequested || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == 0) ? false : true;
     }
 }
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

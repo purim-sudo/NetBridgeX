@@ -1,5 +1,3 @@
-[Reading 90 lines from start (total: 90 lines, 0 remaining)]
-
 package com.genymobile.gnirehtet;
 
 import android.net.IpPrefix;
@@ -90,5 +88,3 @@ public class CIDR implements Parcelable {
         dest.writeInt(this.prefixLength);
     }
 }
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

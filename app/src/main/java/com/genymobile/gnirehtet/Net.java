@@ -1,5 +1,3 @@
-[Reading 56 lines from start (total: 56 lines, 0 remaining)]
-
 package com.genymobile.gnirehtet;
 
 import java.net.Inet4Address;
@@ -56,5 +54,3 @@ public final class Net {
         return (Inet4Address) toInetAddress(localhost);
     }
 }
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]

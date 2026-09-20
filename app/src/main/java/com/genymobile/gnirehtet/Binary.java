@@ -1,5 +1,3 @@
-[Reading 38 lines from start (total: 38 lines, 0 remaining)]
-
 package com.genymobile.gnirehtet;
 
 /* JADX INFO: loaded from: classes2.dex */
@@ -38,5 +36,3 @@ public final class Binary {
         return builder.toString();
     }
 }
-
-[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
