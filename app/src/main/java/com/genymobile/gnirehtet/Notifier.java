@@ -63,15 +63,19 @@ public class Notifier {
     }
 
     public void stop() {
-        if (!this.foreground) {
-            return;
+        if (this.foreground) {
+            if (Build.VERSION.SDK_INT >= 24) {
+                this.context.stopForeground(1);
+            } else {
+                this.context.stopForeground(true);
+            }
+            this.foreground = false;
         }
-        if (Build.VERSION.SDK_INT >= 24) {
-            this.context.stopForeground(1);
-        } else {
-            this.context.stopForeground(true);
+        try {
+            getNotificationManager().cancel(NOTIFICATION_ID);
+        } catch (Throwable e) {
+            android.util.Log.w("Notifier", "Could not cancel NetBridgeX notification", e);
         }
-        this.foreground = false;
     }
 
     public void setFailure(boolean failed) {
