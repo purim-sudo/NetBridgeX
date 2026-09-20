@@ -53,8 +53,7 @@ public class GnirehtetService extends VpnService {
 
     public static void stop(Context context) {
         Intent intent = new Intent(context, (Class<?>) GnirehtetService.class).setAction(ACTION_STOP_VPN);
-        if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent);
-        else context.startService(intent);
+        context.startService(intent);
     }
 
     @Override // android.app.Service
