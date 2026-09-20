@@ -1,0 +1,7 @@
+[Reading 3 lines from start (total: 3 lines, 0 remaining)]
+
+rootProject.name = 'NetBridgeX'
+
+include 'app'
+
+[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
