@@ -1,0 +1,11 @@
+[Reading 7 lines from start (total: 7 lines, 0 remaining)]
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NetBridgeX</string>
+    <string name="relay_connected">Reverse tethering active</string>
+    <string name="relay_disconnected">Relay disconnected</string>
+    <string name="stop_vpn">Stop NetBridgeX</string>
+</resources>
+
+[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
