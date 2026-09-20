@@ -83,7 +83,11 @@ public final class HotspotProxyServer {
             }
         } else {
             this.executor.shutdownNow();
-            this.executor.awaitTermination(1L, TimeUnit.SECONDS);
+            try {
+                this.executor.awaitTermination(1L, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
