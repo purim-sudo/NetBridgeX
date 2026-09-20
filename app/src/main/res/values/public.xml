@@ -1,0 +1,17 @@
+[Reading 13 lines from start (total: 13 lines, 0 remaining)]
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <public type="drawable" name="ic_close_24dp" id="0x7f010000" />
+    <public type="drawable" name="ic_public_24dp" id="0x7f010001" />
+    <public type="drawable" name="ic_report_problem_24dp" id="0x7f010002" />
+    <public type="drawable" name="ic_usb_24dp" id="0x7f010003" />
+    <public type="string" name="app_name" id="0x7f020000" />
+    <public type="string" name="relay_connected" id="0x7f020001" />
+    <public type="string" name="relay_disconnected" id="0x7f020002" />
+    <public type="string" name="stop_vpn" id="0x7f020003" />
+    <public type="style" name="AppTheme" id="0x7f030000" />
+    <public type="style" name="Theme.Transparent" id="0x7f030001" />
+</resources>
+
+[executed on device: DESKTOP-1RJKODI (291d4b53-196c-4a98-a307-e51f238e5e74)]
