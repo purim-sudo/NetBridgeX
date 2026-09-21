@@ -14,7 +14,6 @@ import android.util.Log;
 import java.io.IOException;
 import java.net.InetAddress;
 
-/* JADX INFO: loaded from: classes2.dex */
 public class GnirehtetService extends VpnService {
     private static final String ACTION_START_VPN = "com.genymobile.gnirehtet.START_VPN";
     private static final String ACTION_STOP_VPN = "com.genymobile.gnirehtet.STOP_VPN";
@@ -22,7 +21,8 @@ public class GnirehtetService extends VpnService {
     private static final String EXTRA_PROXY_PORT = "proxyPort";
     private static final String EXTRA_VPN_CONFIGURATION = "vpnConfiguration";
     private static final int MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT = 2;
-    private static final int MTU = 16384;
+    // NetBridgeX USB-only transport uses a conservative 1500-byte IPv4 MTU.
+    private static final int MTU = 1500;
     private static final long RELAY_DISCONNECT_SHUTDOWN_DELAY_MS = 5000;
     public static final boolean VERBOSE = false;
     private boolean closing;
@@ -56,7 +56,7 @@ public class GnirehtetService extends VpnService {
         context.startService(intent);
     }
 
-    @Override // android.app.Service
+    @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand action=" + (intent == null ? "null" : intent.getAction()));
         if (intent != null && ACTION_STOP_VPN.equals(intent.getAction())) {
@@ -98,19 +98,26 @@ public class GnirehtetService extends VpnService {
         return MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT;
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
-    public synchronized boolean isRunning() {
+    private synchronized boolean isRunning() {
         return (this.vpnInterface == null || this.closing) ? false : true;
     }
 
     private boolean setupVpn(VpnConfiguration config) {
-        VpnService.Builder builder = new VpnService.Builder().addAddress(VPN_ADDRESS, 32).allowFamily(OsConstants.AF_INET6).setSession(getString(R.string.app_name)).setBlocking(true).setMtu(MTU);
+        VpnService.Builder builder = new VpnService.Builder()
+                .addAddress(VPN_ADDRESS, 32)
+                .setSession(getString(R.string.app_name))
+                .setBlocking(true)
+                .setMtu(MTU);
+
+        // The reverse-tether relay is currently IPv4. Do not capture IPv6 packets
+        // into a relay that cannot transport them end-to-end.
         if (Build.VERSION.SDK_INT >= 29) {
             builder.setMetered(false);
         }
         if (Build.VERSION.SDK_INT >= 23) {
             builder.setUnderlyingNetworks(new Network[0]);
         }
+
         CIDR[] routes = config.getRoutes();
         if (routes.length == 0) {
             builder.addRoute("0.0.0.0", 0);
@@ -119,11 +126,13 @@ public class GnirehtetService extends VpnService {
                 builder.addRoute(route.getAddress(), route.getPrefixLength());
             }
         }
+
         if (Build.VERSION.SDK_INT >= 33) {
             for (CIDR cidr : config.getExcludedRoutes()) {
                 builder.excludeRoute(cidr.getIpPrefix());
             }
         }
+
         InetAddress[] dnsServers = config.getDnsServers();
         if (dnsServers.length == 0) {
             builder.addDnsServer("8.8.8.8");
@@ -132,6 +141,7 @@ public class GnirehtetService extends VpnService {
                 builder.addDnsServer(dnsServer);
             }
         }
+
         try {
             Log.i(TAG, "Establishing VPN interface");
             this.vpnInterface = builder.establish();
@@ -168,21 +178,20 @@ public class GnirehtetService extends VpnService {
         }
     }
 
-    @Override // android.net.VpnService
+    @Override
     public void onRevoke() {
         Log.i(TAG, "VPN authorization revoked");
         close();
         super.onRevoke();
     }
 
-    @Override // android.app.Service
+    @Override
     public void onDestroy() {
         close();
         super.onDestroy();
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
-    public synchronized void close() {
+    private synchronized void close() {
         if (this.closing) {
             return;
         }
@@ -219,21 +228,22 @@ public class GnirehtetService extends VpnService {
             this.vpnService = vpnService;
         }
 
-        @Override // android.os.Handler
+        @Override
         public void handleMessage(Message message) {
             if (!this.vpnService.isRunning()) {
+                return;
             }
             switch (message.what) {
                 case 0:
-                    removeMessages(GnirehtetService.MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT);
+                    removeMessages(MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT);
                     this.vpnService.notifier.setFailure(false);
                     break;
                 case 1:
                     this.vpnService.notifier.setFailure(true);
-                    removeMessages(GnirehtetService.MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT);
-                    sendEmptyMessageDelayed(GnirehtetService.MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT, GnirehtetService.RELAY_DISCONNECT_SHUTDOWN_DELAY_MS);
+                    removeMessages(MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT);
+                    sendEmptyMessageDelayed(MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT, RELAY_DISCONNECT_SHUTDOWN_DELAY_MS);
                     break;
-                case GnirehtetService.MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT /* 2 */:
+                case MSG_RELAY_TUNNEL_DISCONNECT_TIMEOUT:
                     Log.i(GnirehtetService.TAG, "Relay disconnected, stopping VPN");
                     this.vpnService.close();
                     break;
