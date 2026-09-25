@@ -1,253 +1,277 @@
 # NetBridgeX
 
-NetBridgeX is a Windows + Android **USB reverse-tethering** project.
+NetBridgeX is a Windows + Android USB reverse-tethering project.
 
 Primary path:
 
-**Windows Internet -> USB/ADB -> NetBridgeX relay -> Android VPN -> Android applications**
+**Windows Internet → USB/ADB → Gnirehtet relay → Android VPN/TUN → Android applications**
 
-The goal of USB-only mode is that ordinary Android applications use the PC's Internet connection while the phone's normal Wi-Fi and mobile-data paths are disabled.
+The current development target is a reliable USB-only mode where Android Wi-Fi and mobile data can be disabled while application traffic uses the PC Internet path.
 
-> NetBridgeX incorporates code derived from Genymobile Gnirehtet and remains subject to the Apache License 2.0. See NOTICE.
+## Architecture
 
-## Current USB-only mode
+- GnirehtetActivity — Android control/status UI and VPN permission flow.
+- GnirehtetService — Android VpnService and lifecycle management.
+- Forwarder — moves IPv4 packets between Android TUN and the relay.
+- RelayTunnel — connects to the ADB reverse local socket.
+- PersistentRelayTunnel — reconnects when the relay channel is interrupted.
+- HotspotProxyServer — optional HTTP CONNECT proxy helper.
+- NetBridgeXTetherShell — experimental privileged/test-network component.
+- windows/ — Windows bootstrap, start, status, stop, and validation scripts.
 
-The currently tested configuration is:
+The transport currently targets IPv4. Gnirehtet itself also documents IPv4-only TCP/UDP support, so IPv6 is a separate future engineering task.
 
-- USB debugging authorized.
-- ADB reverse tunnel: localabstract:gnirehtet -> tcp:31416.
-- Android Wi-Fi: OFF.
-- Android mobile data: OFF.
-- NetBridgeX VPN: tun0, 10.0.0.2/32.
-- VPN default route: 0.0.0.0/0.
-- VPN DNS: 8.8.8.8.
-- VPN MTU: 1500.
-- Android VPN network reports INTERNET + VALIDATED.
-- IPv4 is the primary transported address family.
-- The Windows relay carries both TCP and UDP application traffic.
+## Prerequisites
 
-Android's NET_CAPABILITY_VALIDATED is the system's indication that the network has actual public-Internet reachability, rather than merely being configured as an Internet-capable network.
+- Windows 10/11.
+- One Android device with USB debugging enabled and authorized.
+- A working USB data cable.
+- JDK 17.
+- Internet access on the Windows host for first-time tool provisioning.
 
-## Why the 1500-byte MTU matters
-
-The Android VPN currently uses an MTU of 1500. This is intentionally conservative for USB reverse tethering and avoids the oversized-packet behavior seen during earlier testing.
-
-The host relay and Android side should use compatible packet sizing when the relay is rebuilt. Do not independently change the Android MTU without testing the corresponding relay behavior.
-
-## Windows quick start
-
-### Option A - repository PowerShell controller
+The project checks in the Gradle Wrapper so a global Gradle installation is not required.
+## Tool provisioning
 
 From the repository root:
 
 ~~~powershell
-powershell -ExecutionPolicy Bypass -File .\windows\Start-NetBridgeX.ps1
+powershell -ExecutionPolicy Bypass -File .\windows\Ensure-NetBridgeXTools.ps1
 ~~~
 
-Check the state:
+This provisions:
+
+- Android Platform-Tools (adb) into tools/platform-tools/.
+- Gnirehtet Rust 2.5.1 Windows relay into tools/gnirehtet/.
+
+The relay archive is SHA-256 verified before extraction. Generated binaries remain ignored by Git.
+
+For local Android builds, set the JDK and SDK environment for the current PowerShell session:
 
 ~~~powershell
-powershell -ExecutionPolicy Bypass -File .\windows\Status-NetBridgeX.ps1
+$env:JAVA_HOME="C:\Program Files\Microsoft\jdk-17.0.20.101-hotspot"
+$env:ANDROID_SDK_ROOT="$env:LOCALAPPDATA\Android\Sdk"
+$env:ANDROID_HOME=$env:ANDROID_SDK_ROOT
+$env:Path="$env:JAVA_HOME\bin;$env:ANDROID_SDK_ROOT\platform-tools;$env:Path"
 ~~~
 
-Stop:
+## Build and test
+
+Build the complete development and release artifacts:
 
 ~~~powershell
-powershell -ExecutionPolicy Bypass -File .\windows\Stop-NetBridgeX.ps1
+.\gradlew.bat clean testDebugUnitTest assembleDebug assembleRelease
 ~~~
 
-The start controller:
+Debug APK:
 
-1. Verifies ADB and an authorized Android device.
-2. Installs the local debug APK when it exists.
-3. Starts the Windows relay.
-4. Creates the ADB reverse tunnel.
-5. Starts the Android VPN.
-6. Verifies the VPN interface.
-7. Starts the optional shell-side tethering component when that component is present.
+app/build/outputs/apk/debug/app-debug.apk
 
-### Option B - direct USB launcher
+Release build:
 
-The working Windows USB launcher is also kept under:
+app/build/outputs/apk/release/app-release-unsigned.apk
+
+The release artifact is intentionally unsigned until a proper signing/CI secret setup is added.
+## Start NetBridgeX with the graphical Control Center
+
+For normal day-to-day use on Windows, launch:
 
 ~~~text
-host-relay/gnirehtet-rust-win64/NetBridgeX-USB.cmd
+Desktop -> NetBridgeX Control Center
 ~~~
 
-It performs USB-only setup by disabling Wi-Fi and mobile data, creating the ADB reverse tunnel, and starting the Android VPN.
+The Control Center automatically detects the authorized Android device and provides these controls:
 
-**Important:** stopping NetBridgeX does not automatically turn Wi-Fi or mobile data back on. Re-enable them manually when USB-only mode is no longer required.
+- **Start USB-only** — starts the strict USB reverse-tethering mode with Wi-Fi and mobile data disabled.
+- **Start TikTok Compatibility** — starts the mode currently used for TikTok compatibility. Wi-Fi is disabled, while Android cellular data remains enabled so Android exposes a CELLULAR network that TikTok can accept alongside the NetBridgeX VPN.
+- **Stop & Restore** — stops the VPN/relay and restores the Wi-Fi/mobile-data state that existed before startup.
+- **Refresh Status** — shows Android connection, mode, Wi-Fi, mobile data, VPN, USB relay, and compatibility transport status.
 
-## Android build
+The Control Center does not require typing a serial number or PowerShell commands.
 
-The Android project is under app/.
+The Windows GUI files are:
 
-Build the debug APK:
-
-~~~powershell
-.\gradlew.bat assembleDebug --no-daemon
+~~~text
+windows/NetBridgeX-ControlCenter.ps1
+windows/Launch-NetBridgeX-ControlCenter.vbs
+windows/Start-NetBridgeX-ControlCenter.bat
 ~~~
 
-APK output:
+A desktop shortcut named **NetBridgeX Control Center** launches the graphical interface without opening a command window.
+
+## First-time Android setup
+
+1. Connect the Android phone to Windows with a USB data cable.
+2. Enable **USB debugging** in Android Developer Options.
+3. Unlock the phone and accept the USB debugging authorization prompt.
+4. Start NetBridgeX from the Control Center.
+5. On the first VPN start, Android may display the system VPN approval dialog. Approve NetBridgeX.
+6. Keep the USB connection active while using NetBridgeX.
+
+The Windows startup script automatically installs the current debug APK from:
 
 ~~~text
 app/build/outputs/apk/debug/app-debug.apk
 ~~~
 
-Install manually:
+## Start USB-only mode
+
+Connect and authorize the Android device first. Android may request notification permission and then the system VPN approval the first time after installation; both approvals are required.
+
+### Graphical method
+
+Open **NetBridgeX Control Center** from the Windows desktop and select **Start USB-only**.
+
+### Command-line method
 
 ~~~powershell
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+powershell -ExecutionPolicy Bypass -File .\windows\Start-NetBridgeX.ps1 start
 ~~~
 
-Prepare the USB reverse tunnel:
+The USB-only launcher:
+
+1. Provisions local ADB and relay tools.
+2. Finds the authorized device.
+3. Installs the locally built debug APK.
+4. Records the existing Wi-Fi/mobile-data state.
+5. Disables Wi-Fi and mobile data for the test.
+6. Creates localabstract:gnirehtet -> tcp:31416.
+7. Starts the Windows relay.
+8. Starts the NetBridgeX Android VPN.
+9. Prints a diagnostic status report.
+
+## TikTok Compatibility Mode
+
+TikTok Compatibility Mode is the current mode to use when TikTok needs Android to expose a cellular network while NetBridgeX is active.
+
+### Graphical method
+
+Open **NetBridgeX Control Center** and select **Start TikTok Compatibility**.
+
+### Command-line method
 
 ~~~powershell
-adb reverse --remove-all
-adb reverse localabstract:gnirehtet tcp:31416
+powershell -ExecutionPolicy Bypass -File .\windows\Start-NetBridgeX.ps1 start -TikTokCompatibility
 ~~~
 
-Start the VPN:
+Expected test configuration:
+
+- Wi-Fi: **OFF**
+- Mobile data setting: **ON**
+- NetBridgeX VPN: **ON**
+- USB reverse tunnel: **ON**
+- Android tun0: **ACTIVE**
+- TikTok: For You feed, scrolling, and profiles can be tested over the NetBridgeX path.
+
+The mobile-data setting being ON is intentional in this compatibility mode. On the tested stock Android device, keeping a cellular network exposed is currently required for TikTok compatibility; this mode therefore does **not** meet the stricter requirement of mobile-data toggle OFF.
+
+## Check state
+
+Graphical method: open **NetBridgeX Control Center** and select **Refresh Status**.
+
+Command-line method:
 
 ~~~powershell
-adb shell am start -a com.genymobile.gnirehtet.START -n com.netbridgex.android/com.genymobile.gnirehtet.GnirehtetActivity --esa dnsServers 8.8.8.8 --esa routes 0.0.0.0/0
+powershell -ExecutionPolicy Bypass -File .\windows\Status-NetBridgeX.ps1
 ~~~
 
-Verify:
+## Stop and restore
+
+Graphical method: select **Stop & Restore** in the Control Center.
+
+Command-line method:
 
 ~~~powershell
-adb shell ip addr show tun0
-adb shell settings get global wifi_on
-adb shell settings get global mobile_data
-adb reverse --list
+powershell -ExecutionPolicy Bypass -File .\windows\Stop-NetBridgeX.ps1
 ~~~
 
-Expected USB-only state:
+On stop, NetBridgeX restores the Wi-Fi/mobile-data state it recorded at startup. Use -KeepRadiosOff when intentionally leaving the radios disabled.
 
-- tun0 exists with 10.0.0.2/32.
-- wifi_on is 0.
-- mobile_data is 0.
-- adb reverse --list contains localabstract:gnirehtet tcp:31416.
+For more than one ADB device, pass -Serial <device-serial>.
 
-## Throughput testing
-
-NetBridgeX contains an Android-side HTTP test helper:
-
-~~~text
-com.genymobile.gnirehtet.NetBridgeXHttpTest
-~~~
-
-The helper can be launched with app_process using the installed APK:
-
-~~~powershell
-$apkPath=(adb shell cmd package path com.netbridgex.android | Select-Object -First 1).Trim() -replace '^package:',''
-adb shell "CLASSPATH=$apkPath app_process / com.genymobile.gnirehtet.NetBridgeXHttpTest https://speed.cloudflare.com/__down?bytes=5000000"
-~~~
-
-It reports:
-
-~~~text
-HTTP_RESULT bytes=<bytes> seconds=<seconds> Mbps=<average>
-~~~
-
-Always measure the Android process separately from a direct PC speed test. A direct PC result measures the upstream connection; the Android result measures the complete Android -> USB/ADB -> relay -> Internet path.
-
-## Application compatibility testing
-
-USB reverse tethering is more than a browser test. Applications may use:
-
-- HTTPS/TCP.
-- UDP.
-- DNS over UDP.
-- DNS over TLS.
-- HTTP/2.
-- HTTP/3/QUIC.
-- Long-lived TCP connections.
-- Multiple simultaneous destinations.
-
-The relay therefore needs to remain healthy under mixed TCP/UDP traffic.
-
-### Facebook Lite
-
-Facebook Lite has been tested with Wi-Fi and mobile data disabled. Its Fizz client successfully established its connection through the NetBridgeX VPN during testing.
-
-### TikTok
-
-TikTok can load video/reel content through the tunnel, but a separate page/information view has exhibited an application-level "No internet connection - tap to retry" state.
-
-This is being treated as a transport/application-compatibility issue rather than assuming the entire VPN is offline. During investigation the relay has shown simultaneous TikTok-like TCP and UDP/443 traffic, while the Android VPN remains VALIDATED.
-
-When debugging this symptom, collect both:
-
-~~~powershell
-adb logcat -d -v time
-~~~
-
-and the Windows relay log. Do not enable Wi-Fi or mobile data as a workaround during a USB-only test, because that would invalidate the test.
-
-## Architecture
-
-- GnirehtetService - Android VpnService; creates the phone-side TUN.
-- Forwarder - moves IPv4 packets between the Android TUN and the relay tunnel.
-- RelayTunnel - connects the Android side to the host through the ADB reverse local socket.
-- PersistentRelayTunnel - reconnects the relay tunnel when the host-side channel disappears.
-- NetBridgeXTetherShell - optional privileged shell-side test-network/hotspot component.
-- HotspotProxyServer - optional HTTPS CONNECT fallback.
-- host-relay/gnirehtet-rust-win64 - Windows Rust relay and USB launcher.
-
-The core transport is currently IPv4. The Android VPN may expose an IPv6 link-local address, but the reverse-tether relay path is not an end-to-end IPv6 transport. IPv6 support should therefore be treated as a separate engineering task rather than assumed from the presence of an IPv6 address on tun0.
-
-## Troubleshooting
-
-### VPN exists but applications say "No internet"
-
-1. Confirm Wi-Fi is off.
-2. Confirm mobile data is off.
-3. Confirm tun0 exists.
-4. Confirm the VPN reports VALIDATED.
-5. Confirm the ADB reverse mapping.
-6. Confirm the Windows relay is still running.
-7. Check relay logs for TCP resets, unexpected first packets, invalid IPv4 packets, and UDP/443 activity.
-8. Repeat the test without changing the phone's radios.
-
-### ADB reverse disappeared
+## End-to-end validation
 
 Run:
 
 ~~~powershell
-adb reverse --remove-all
-adb reverse localabstract:gnirehtet tcp:31416
-adb reverse --list
+powershell -ExecutionPolicy Bypass -File .\windows\Test-NetBridgeX.ps1
 ~~~
 
-Then restart the VPN.
+The validation checks:
 
-### VPN does not start
+- Authorized ADB device.
+- NetBridgeX package installed.
+- ADB reverse mapping.
+- Wi-Fi/mobile-data state.
+- Windows relay process.
+- Android TUN/VPN interface.
+- Android Internet request through the VPN using NetBridgeXHttpTest.
 
-Check that Android USB debugging is authorized and that the NetBridgeX VPN permission has already been granted. Android permits only one active VPN at a time.
+For a larger throughput test:
 
-## GitHub Actions
+~~~powershell
+powershell -ExecutionPolicy Bypass -File .\windows\Test-NetBridgeX.ps1 -Url "https://speed.cloudflare.com/__down?bytes=5000000"
+~~~
 
-The repository contains a CI workflow that builds the Android debug APK. Local builds use the Gradle wrapper included with the project.
+Treat the Android result as the end-to-end USB tunnel measurement; a normal Windows browser speed test measures only the host connection.
 
-## Development notes
+## Troubleshooting
 
-Do not commit generated APKs, Gradle build output, local relay logs, phone screenshots, or machine-specific paths.
+### VPN says ACTIVE but an application has no Internet
 
-When changing the transport:
+Check, in order:
 
-1. Build the Android APK.
-2. Build/update the matching host relay when packet sizing changes.
-3. Install the APK.
-4. Disable Wi-Fi and mobile data.
-5. Establish the ADB reverse tunnel.
-6. Verify tun0 and VALIDATED.
-7. Test DNS.
-8. Test HTTPS/TCP.
-9. Test UDP/443.
-10. Test real applications such as Facebook Lite and TikTok.
-11. Measure Android throughput separately from PC throughput.
+1. Wi-Fi is off.
+2. Mobile data is off.
+3. adb reverse --list contains the gnirehtet mapping.
+4. gnirehtet.exe is still running.
+5. The Android VPN interface exists.
+6. Connectivity diagnostics show INTERNET and VALIDATED.
+7. Run Test-NetBridgeX.ps1 and inspect its HTTP result.
 
-## Attribution
+### ADB device is unauthorized
 
-NetBridgeX incorporates code derived from Genymobile Gnirehtet and remains subject to the Apache License 2.0. See NOTICE.
+Run:
+
+~~~powershell
+.\tools\platform-tools\adb.exe devices
+~~~
+
+Unlock the phone and accept the USB debugging authorization prompt.
+
+### VPN permission is requested
+
+Android allows only one active VPN at a time. Stop any other VPN before starting NetBridgeX.
+
+### Relay connection drops
+
+Restart the USB reverse mapping:
+
+~~~powershell
+.\tools\platform-tools\adb.exe reverse --remove-all
+.\tools\platform-tools\adb.exe reverse localabstract:gnirehtet tcp:31416
+~~~
+Then restart NetBridgeX.
+
+## Compatibility scope
+
+The production target is USB reverse tethering over IPv4.
+
+Applications may exercise HTTPS/TCP, UDP, DNS, HTTP/2, QUIC/UDP 443, and long-lived connections differently. Real application testing is therefore required in addition to the basic HTTP probe.
+
+Known limitation: IPv6 is not currently an end-to-end transport in NetBridgeX.
+
+## Development rules
+
+Do not commit generated APKs, Gradle build output, local relay binaries, machine-specific state, or logs.
+
+When changing transport behavior, rebuild the Android APK and retest:
+
+DNS → HTTPS/TCP → UDP → QUIC/443 → sustained connections → real applications → throughput.
+
+The repository contains code derived from Genymobile Gnirehtet and retains the Apache License 2.0 attribution in NOTICE.
+
+## CI
+
+GitHub Actions uses the checked-in Gradle Wrapper, Java 17, Android SDK 36, unit tests, debug build, and unsigned release build.
+
+A green CI build proves compilation and unit tests. It does not replace physical USB/Android integration testing.
